@@ -15,26 +15,36 @@ document.addEventListener('DOMContentLoaded', () => {
   let sfReady = false;
   let sfCallback = null;
 
-  function initStockfish() {
+  function attachSfHandlers() {
+    sf.onmessage = e => {
+      const line = typeof e.data === 'string' ? e.data : '';
+      if (line === 'uciok') { sf.postMessage('isready'); return; }
+      if (line === 'readyok') { sfReady = true; return; }
+      if (line.startsWith('info') && line.includes('score')) {
+        const m = line.match(/score (cp|mate) (-?\d+)/);
+        if (m) updateEvalBar(m[1], +m[2]);
+      }
+      if (line.startsWith('bestmove') && sfCallback) {
+        const parts = line.split(' ');
+        sfCallback(parts[1]);
+        sfCallback = null;
+      }
+    };
+    sf.postMessage('uci');
+  }
+
+  async function initStockfish() {
     try {
-      sf = new Worker('https://cdn.jsdelivr.net/npm/stockfish/src/stockfish.js');
-      sf.onmessage = e => {
-        const line = typeof e === 'string' ? e : e.data;
-        if (line === 'uciok') { sf.postMessage('isready'); return; }
-        if (line === 'readyok') { sfReady = true; return; }
-        if (line.startsWith('info') && line.includes('score')) {
-          const m = line.match(/score (cp|mate) (-?\d+)/);
-          if (m) updateEvalBar(m[1], +m[2]);
-        }
-        if (line.startsWith('bestmove') && sfCallback) {
-          const parts = line.split(' ');
-          sfCallback(parts[1]);
-          sfCallback = null;
-        }
-      };
-      sf.postMessage('uci');
+      // Fetch and blobify to bypass cross-origin Worker restriction
+      const resp = await fetch('https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js');
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const script = await resp.text();
+      const blobUrl = URL.createObjectURL(new Blob([script], { type: 'text/javascript' }));
+      sf = new Worker(blobUrl);
+      attachSfHandlers();
     } catch (err) {
       console.warn('Stockfish unavailable:', err);
+      sf = null;
     }
   }
 
@@ -193,7 +203,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const fen = Chess.toFen(aiBoard.state);
     sfMove(fen, aiDepth, uci => {
       setThinking(false);
-      if (!uci || !aiActive) return;
+      if (!uci || !aiActive) {
+        aiBoard.setInteractive(true);
+        if (!sfReady) setAIStatus('Stockfish loading… wait a moment then try your move again', '');
+        return;
+      }
       const m = uciToMove(uci, aiBoard.state);
       if (!m) return;
       const result = Chess.makeMove(aiBoard.state, m.from, m.to, m.promo);
