@@ -55,12 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
     sf.postMessage('go depth ' + depth);
   }
 
-  function uciToMove(uci, state) {
-    if (!uci || uci === '(none)') return null;
+  function uciToMove(uci) {
+    if (!uci) return null;
+    uci = uci.trim();
+    if (!uci || uci === '(none)' || uci.length < 4) return null;
     const from = Chess.idxFromSq(uci.slice(0, 2));
     const to   = Chess.idxFromSq(uci.slice(2, 4));
     const promo = uci[4] ? uci[4].toUpperCase() : null;
-    return { from, to, promo };
+    return (from >= 0 && from < 64 && to >= 0 && to < 64) ? { from, to, promo } : null;
   }
 
   initStockfish();
@@ -203,15 +205,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const fen = Chess.toFen(aiBoard.state);
     sfMove(fen, aiDepth, uci => {
       setThinking(false);
-      if (!uci || !aiActive) {
+      if (!aiActive) return;
+
+      if (!uci || !sfReady) {
         aiBoard.setInteractive(true);
-        if (!sfReady) setAIStatus('Stockfish loading… wait a moment then try your move again', '');
+        if (!sfReady) setAIStatus('Stockfish loading… make your move', '');
         return;
       }
-      const m = uciToMove(uci, aiBoard.state);
-      if (!m) return;
+
+      // Stockfish has no legal moves — game over (checkmate/stalemate our engine may have missed)
+      if (uci.trim() === '(none)') {
+        const st = Chess.gameStatus(aiBoard.state);
+        if (st.type !== 'ongoing') handleGameOver(st);
+        else { aiBoard.setInteractive(true); setAIStatus('Your move', ''); }
+        return;
+      }
+
+      const m = uciToMove(uci);
+      if (!m) { aiBoard.setInteractive(true); return; }
+
       const result = Chess.makeMove(aiBoard.state, m.from, m.to, m.promo);
-      if (!result) return;
+      if (!result) {
+        // Engine disagreed with Stockfish's move — re-enable so game can continue
+        aiBoard.setInteractive(true);
+        setAIStatus('Your move', '');
+        return;
+      }
+
       aiHistory.push({ san: result.san, from: m.from, to: m.to });
       aiStates.push(result.state);
       aiBoard.state = result.state;
@@ -267,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fen = Chess.toFen(aiBoard.state);
     sfMove(fen, Math.min(aiDepth, 8), uci => {
       if (!uci) return;
-      const m = uciToMove(uci, aiBoard.state);
+      const m = uciToMove(uci);
       if (m) aiBoard.showHints([m.from, m.to]);
       setTimeout(() => aiBoard.clearHints(), 2000);
     });
