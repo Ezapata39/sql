@@ -1,79 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#81b64c"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="ChessLearn"/>
+  <meta name="description" content="Learn chess openings and theory with Stockfish AI"/>
+  <link rel="manifest" href="manifest.json"/>
   <title>Chess Theory Simulator</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div id="app">
     <header>
-      <h1>Chess Theory Simulator</h1>
+      <div class="logo">♔ ChessLearn</div>
       <nav>
-        <button class="tab-btn active" data-tab="play">Free Play</button>
-        <button class="tab-btn" data-tab="openings">Opening Explorer</button>
-        <button class="tab-btn" data-tab="trainer">Opening Trainer</button>
-        <button class="tab-btn" data-tab="theory">Theory Guide</button>
+        <button class="tab-btn active" data-tab="ai">vs AI</button>
+        <button class="tab-btn" data-tab="play">2 Player</button>
+        <button class="tab-btn" data-tab="openings">Openings</button>
+        <button class="tab-btn" data-tab="trainer">Trainer</button>
+        <button class="tab-btn" data-tab="theory">Theory</button>
       </nav>
     </header>
 
     <main>
-      <!-- FREE PLAY TAB -->
-      <section id="tab-play" class="tab-content active">
+
+      <!-- VS AI TAB -->
+      <section id="tab-ai" class="tab-content active">
         <div class="board-layout">
-          <div class="board-container">
-            <div id="board-play" class="chess-board"></div>
+          <div class="board-area">
+            <div class="player-tag" id="ai-top-player">
+              <span class="player-name" id="ai-top-name">Black</span>
+              <span class="player-clock" id="ai-top-clock"></span>
+            </div>
+            <div class="board-wrap">
+              <div class="eval-bar-wrap">
+                <div class="eval-bar" id="eval-bar">
+                  <div class="eval-fill" id="eval-fill"></div>
+                </div>
+                <div class="eval-num" id="eval-num">0.0</div>
+              </div>
+              <div id="board-ai" class="chess-board"></div>
+            </div>
+            <div class="player-tag" id="ai-bot-player">
+              <span class="player-name" id="ai-bot-name">White (You)</span>
+              <span class="player-clock" id="ai-bot-clock"></span>
+            </div>
             <div class="board-controls">
-              <button id="flip-board-play">Flip Board</button>
-              <button id="reset-play">New Game</button>
-              <button id="undo-play">Undo Move</button>
+              <button id="flip-board-ai" title="Flip">⇅</button>
+              <button id="reset-ai" title="New Game">New Game</button>
+              <button id="undo-ai" title="Undo">← Undo</button>
+              <button id="ai-hint-btn" title="Hint">Hint</button>
             </div>
           </div>
           <div class="side-panel">
-            <div class="status-box">
-              <div id="play-status" class="status-text">White to move</div>
-              <div id="play-check" class="check-indicator"></div>
+            <div class="ai-config card">
+              <h3>Play vs Stockfish</h3>
+              <div class="config-row">
+                <label>Play as</label>
+                <div class="btn-group">
+                  <button class="side-btn active" data-side="white">White</button>
+                  <button class="side-btn" data-side="black">Black</button>
+                </div>
+              </div>
+              <div class="config-row">
+                <label>Difficulty <span id="depth-label">10</span></label>
+                <input type="range" id="depth-slider" min="1" max="20" value="10"/>
+              </div>
+              <button id="start-ai-game" class="btn-primary">Start Game</button>
             </div>
-            <div class="move-history-box">
-              <h3>Move History</h3>
-              <div id="play-history" class="move-list"></div>
+            <div class="status-card card">
+              <div id="ai-status" class="status-text">Configure and press Start Game</div>
+              <div id="ai-check" class="check-label"></div>
+              <div id="ai-thinking" class="thinking-indicator" style="display:none">
+                <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+                Stockfish thinking…
+              </div>
             </div>
-            <div class="captured-box">
-              <h3>Captured Pieces</h3>
-              <div id="captured-white" class="captured-row"><span>White lost:</span><span class="pieces"></span></div>
-              <div id="captured-black" class="captured-row"><span>Black lost:</span><span class="pieces"></span></div>
-            </div>
-            <div class="eval-box">
-              <h3>Position Info</h3>
-              <div id="play-fen" class="fen-display"></div>
+            <div class="card move-history-box">
+              <h3>Moves</h3>
+              <div id="ai-history" class="move-list"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- OPENING EXPLORER TAB -->
+      <!-- FREE PLAY TAB -->
+      <section id="tab-play" class="tab-content">
+        <div class="board-layout">
+          <div class="board-area">
+            <div class="board-wrap">
+              <div id="board-play" class="chess-board"></div>
+            </div>
+            <div class="board-controls">
+              <button id="flip-board-play">⇅ Flip</button>
+              <button id="reset-play">New Game</button>
+              <button id="undo-play">← Undo</button>
+            </div>
+          </div>
+          <div class="side-panel">
+            <div class="status-card card">
+              <div id="play-status" class="status-text">White to move</div>
+              <div id="play-check" class="check-label"></div>
+            </div>
+            <div class="card move-history-box">
+              <h3>Moves</h3>
+              <div id="play-history" class="move-list"></div>
+            </div>
+            <div class="card">
+              <h3>Captured</h3>
+              <div id="captured-white" class="captured-row"><span>White lost:</span><span class="cap-pieces"></span></div>
+              <div id="captured-black" class="captured-row"><span>Black lost:</span><span class="cap-pieces"></span></div>
+            </div>
+            <div class="card">
+              <h3>FEN</h3>
+              <div id="play-fen" class="fen-text"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OPENINGS TAB -->
       <section id="tab-openings" class="tab-content">
         <div class="board-layout">
-          <div class="board-container">
-            <div id="board-openings" class="chess-board"></div>
+          <div class="board-area">
+            <div class="board-wrap">
+              <div id="board-openings" class="chess-board"></div>
+            </div>
             <div class="board-controls">
-              <button id="flip-board-openings">Flip Board</button>
-              <button id="prev-opening-move">&#9664; Prev</button>
-              <button id="next-opening-move">Next &#9654;</button>
+              <button id="flip-board-openings">⇅</button>
+              <button id="prev-opening-move">◀ Prev</button>
+              <button id="next-opening-move">Next ▶</button>
               <button id="reset-opening">Reset</button>
             </div>
             <div id="opening-move-progress" class="move-progress"></div>
           </div>
           <div class="side-panel">
-            <div class="opening-selector">
+            <div class="card">
               <h3>Select Opening</h3>
-              <select id="opening-select">
-                <option value="">-- Choose an Opening --</option>
-              </select>
-              <div id="opening-info" class="opening-info-box"></div>
+              <select id="opening-select"><option value="">— Choose —</option></select>
+              <div id="opening-info" class="opening-info"></div>
             </div>
-            <div class="move-history-box">
+            <div class="card move-history-box">
               <h3>Opening Moves</h3>
               <div id="opening-moves-display" class="move-list"></div>
             </div>
@@ -81,60 +151,75 @@
         </div>
       </section>
 
-      <!-- OPENING TRAINER TAB -->
+      <!-- TRAINER TAB -->
       <section id="tab-trainer" class="tab-content">
         <div class="board-layout">
-          <div class="board-container">
-            <div id="board-trainer" class="chess-board"></div>
+          <div class="board-area">
+            <div class="board-wrap">
+              <div id="board-trainer" class="chess-board"></div>
+            </div>
             <div class="board-controls">
-              <button id="flip-board-trainer">Flip Board</button>
-              <button id="trainer-hint">Show Hint</button>
-              <button id="trainer-next">Skip Move</button>
+              <button id="flip-board-trainer">⇅</button>
+              <button id="trainer-hint">Hint</button>
+              <button id="trainer-next">Skip</button>
               <button id="trainer-restart">Restart</button>
             </div>
           </div>
           <div class="side-panel">
-            <div class="opening-selector">
+            <div class="card">
               <h3>Train Opening</h3>
-              <select id="trainer-opening-select">
-                <option value="">-- Choose an Opening --</option>
-              </select>
-              <div id="trainer-side-select" class="side-select">
-                <label><input type="radio" name="trainer-side" value="white" checked /> Play as White</label>
-                <label><input type="radio" name="trainer-side" value="black" /> Play as Black</label>
+              <select id="trainer-opening-select"><option value="">— Choose —</option></select>
+              <div class="side-select">
+                <label><input type="radio" name="trainer-side" value="white" checked/> White</label>
+                <label><input type="radio" name="trainer-side" value="black"/> Black</label>
               </div>
               <button id="trainer-start" class="btn-primary">Start Training</button>
             </div>
-            <div id="trainer-status" class="trainer-status-box">
-              <div id="trainer-message" class="trainer-message">Select an opening and press Start Training</div>
-              <div id="trainer-progress" class="trainer-progress"></div>
-              <div id="trainer-score" class="trainer-score"></div>
+            <div class="card">
+              <div id="trainer-message" class="status-text">Pick an opening and start</div>
+              <div id="trainer-progress" class="sub-text"></div>
+              <div id="trainer-score" class="sub-text"></div>
             </div>
-            <div class="move-history-box">
-              <h3>Moves Completed</h3>
+            <div class="card move-history-box">
+              <h3>Completed Moves</h3>
               <div id="trainer-history" class="move-list"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- THEORY GUIDE TAB -->
+      <!-- THEORY TAB -->
       <section id="tab-theory" class="tab-content">
         <div class="theory-layout">
-          <div class="theory-sidebar">
+          <div class="theory-sidebar card">
             <h3>Topics</h3>
             <ul id="theory-topics"></ul>
           </div>
-          <div class="theory-content" id="theory-content"></div>
+          <div class="theory-content card" id="theory-content"></div>
         </div>
       </section>
+
     </main>
+
+    <!-- Promotion modal -->
+    <div id="promo-modal" class="modal" style="display:none">
+      <div class="modal-box">
+        <h3>Promote Pawn</h3>
+        <div class="promo-choices" id="promo-choices"></div>
+      </div>
+    </div>
   </div>
 
   <script src="chess.js"></script>
+  <script src="pieces.js"></script>
   <script src="openings.js"></script>
   <script src="theory.js"></script>
   <script src="board.js"></script>
   <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
 </body>
 </html>
